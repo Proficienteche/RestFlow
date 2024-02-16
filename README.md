@@ -77,7 +77,7 @@ public class RestFlowTest {
              * As part of template configuration, expected status code and response type can be defined. Also, the
              * configuration can be registered with RestFlow to the template later and pass only dynamic details.
              */
-            ShipmentTracking post = restClient.createEndpointTemplate().
+            Tracking post = restClient.createEndpointTemplate().
                     withEndpointPath("/api/track/v1/details/{inquiryNumber}/").
                     withMethod(Http.Method.GET).
                     withPathParameter("inquiryNumber", "1Z2220060290602143").
@@ -85,7 +85,7 @@ public class RestFlowTest {
                     withHeader("transId", "testing Id").
                     withHeader("transactionSrc", "testing").
                     withExpectedStatus(Http.Status.OK).
-                    withResponseType(ShipmentTracking.class).
+                    withResponseType(Tracking.class).
                     withTimeout(30).
                     createEndpoint().
                     dispatch();
