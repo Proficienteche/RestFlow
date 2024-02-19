@@ -22,8 +22,8 @@ public class APIEndpointTemplateTest extends RestFlowTestSetup {
     void validateEndpointTemplateInputData() {
 
         mockedRestClients.when(() -> RestFlow.instanceOf(anyString())).thenReturn(mockedClient);
-        when(mockedClient.getAPISecuritySchemeIds()).thenReturn(new HashSet<>());
-        when(mockedClient.getAPIUrl()).thenReturn("https://test.com");
+//        when(mockedClient.getAPISecuritySchemeIds()).thenReturn(new HashSet<>());
+//        when(mockedClient.getAPIUrl()).thenReturn("https://test.com");
         Exception exception = assertThrows(NullPointerException.class, () -> {
             new APIEndpointTemplateImpl(null);
         });

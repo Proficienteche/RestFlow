@@ -1,13 +1,13 @@
 package com.proficient.restapi.restclient.implementation;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.proficient.restapi.exception.APIResponseException;
+import com.fasterxml.jackson.databind.*;
 import com.proficient.restapi.restclient.*;
+import com.proficient.restapi.util.ObjectsUtility;
 import com.proficient.restapi.util.ValidateObjects;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -19,6 +19,7 @@ import java.util.*;
 
 final class APIEndpointTemplateImpl implements APIEndpointTemplate {
 
+    private String templateSnapShotName;
     private String instanceId;
     private String path;
     private Http.Method method;
@@ -27,13 +28,13 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
     private HashMap<String, String> bodyParams;
     private HashMap<String, String> headers;
     private String body;
+    private Object bodyObject;
     private int timeout = 15;
     private Http.Status expectedStatus;
     private Class responseClass;
-    private HttpRequest httpRequest;
     private List<String> securitySchemeIds;
     private HashMap<String, Authenticator> authenticators;
-
+    private PropertyNamingStrategy namingStrategy;
     private boolean isDefaultResponse;
 
 
@@ -86,6 +87,12 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
     }
 
     @Override
+    public <T> APIEndpointTemplate withPathParameters(T pathParamsBean) {
+        pathParams.putAll(setParameters(pathParamsBean));
+        return this;
+    }
+
+    @Override
     public APIEndpointTemplate withQueryParameter(String parameterName, String parameterValue) {
         if (!ValidateObjects.hasEmptyElement(parameterName, parameterValue))
             queryParams.put(parameterName, parameterValue);
@@ -100,6 +107,12 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
     }
 
     @Override
+    public <T> APIEndpointTemplate withQueryParameters(T queryParamsBean) {
+        queryParams.putAll(setParameters(queryParamsBean));
+        return this;
+    }
+
+    @Override
     public APIEndpointTemplate withBodyParameter(String parameterName, String parameterValue) {
         if (!ValidateObjects.hasEmptyElement(parameterName, parameterValue))
             bodyParams.put(parameterName, parameterValue);
@@ -110,6 +123,12 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
     public APIEndpointTemplate withBodyParameters(Map<String, String> bodyParameters) {
         if (!ValidateObjects.hasEmptyValues(bodyParameters))
             bodyParams.putAll(bodyParameters);
+        return this;
+    }
+
+    @Override
+    public <T> APIEndpointTemplate withBodyParameters(T bodyParamsBean) {
+        bodyParams.putAll(setParameters(bodyParamsBean));
         return this;
     }
 
@@ -141,19 +160,21 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
     }
 
     @Override
-    public APIEndpointTemplate withBody(String body) {
+    public APIEndpointTemplate withPayload(String body) {
         if (!ValidateObjects.isEmpty(body))
             this.body = body;
         return this;
     }
 
     @Override
-    public APIEndpointTemplate withBody(Object body) {
-        try {
-            this.body = new ObjectMapper().writeValueAsString(body);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Unable to parse object into JSON string. " + e.getMessage());
-        }
+    public APIEndpointTemplate withPayload(Object body) {
+        this.bodyObject = body;
+        return this;
+    }
+
+    @Override
+    public APIEndpointTemplate withPropertyNamingStrategy(PropertyNamingStrategy namingStrategy) {
+        this.namingStrategy = namingStrategy;
         return this;
     }
 
@@ -177,15 +198,31 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
     @Override
     public APIEndpointTemplate createEndpoint() {
         validateInputData();
-        buildHttpRequest();
-
+//        buildHttpRequest();
         return this;
     }
 
+//    @Override
+//    public APIEndpointTemplate createSnapShot() {
+//        this.templateSnapShotName = path;
+//        validateInputData();
+//
+//        return this;
+//    }
+
+//    @Override
+//    public APIEndpointTemplate createSnapShot(String name) {
+//        this.templateSnapShotName = name;
+//        validateInputData();
+//        return this;
+//    }
+
     @Override
-    public <T> T dispatch() throws APIResponseException {
+    public <T> T dispatch() throws APIResponseExceptionImpl {
+        validateInputData();
         HttpResponse<String> response = null;
         try {
+            HttpRequest httpRequest = buildHttpRequest();
             setResponseType();
             HttpClient httpClient = RESTClientEngine.instance().getHttpClient(instanceId);
             response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -195,14 +232,11 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
                 if (!responseClass.equals(String.class))
                     return (T) new ObjectMapper().readValue(response.body(), responseClass);
                 else
-                    return (T) response.body();
+                    return (T) ObjectsUtility.jsonFormat(response.body());
             } else
-                throw new APIResponseException(response.version().name(), response.statusCode(),
-                        response.headers().map(), response.body());
+                throw APIResponseExceptionImpl.APIResponseBuilder(response, null).build();
         } catch (JsonMappingException e) {
-            throw new APIResponseException(response.version().name(), response.statusCode(),
-                    response.headers().map(), response.body());
-
+            throw APIResponseExceptionImpl.APIResponseBuilder(response, e).build();
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -236,7 +270,7 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
         }
     }
 
-    private void buildHttpRequest() {
+    private HttpRequest buildHttpRequest() {
 
         HttpRequest.Builder requestBuilder = null;
         HttpRequest.BodyPublisher bodyPublisher = null;
@@ -244,7 +278,7 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
         String bodyForm = null;
 
         setSecuritySchemes();
-
+        serializeBodyObject();
         if (bodyParams.size() > 0)
             bodyForm = prepareBodyForm();
         if (method == Http.Method.POST || method == Http.Method.PUT || method == Http.Method.PATCH) {
@@ -265,7 +299,20 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
         requestBuilder =
                 HttpRequest.newBuilder(uri).method(method.getName(), bodyPublisher).headers(getHeaders()).timeout(Duration.ofSeconds(timeout));
 
-        httpRequest = requestBuilder.build();
+        return requestBuilder.build();
+    }
+
+    private void serializeBodyObject() {
+        if (bodyObject == null)
+            return;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            if (namingStrategy != null)
+                mapper.setPropertyNamingStrategy(namingStrategy);
+            this.body = mapper.writeValueAsString(bodyObject);
+        } catch (Exception exeArg) {
+            throw new IllegalArgumentException("Unable to parse object into JSON string. " + exeArg.getMessage());
+        }
     }
 
     private void setSecuritySchemes() {
@@ -347,4 +394,60 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
         }
         return headerList;
     }
+
+    private <T> HashMap<String, String> setParameters(T paramBean) {
+        var params = new HashMap<String, String>();
+        if (paramBean != null) {
+            Class<?> beanClass = paramBean.getClass();
+            // Get all declared fields of the bean class
+            Field[] fields = beanClass.getDeclaredFields();
+            // Iterate through the fields
+            for (Field field : fields) {
+                // Ensure field is accessible (in case it's private)
+                field.setAccessible(true);
+                try {
+                    // Get the value of the field from the bean instance
+                    Object value = field.get(paramBean);
+                    if (value != null)
+                        params.put(field.getName(), String.valueOf(value));
+                    // Print field name and its value
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+        }
+        return params;
+    }
+
+
+//    private APIEndpointTemplateImpl copy() {
+//        APIEndpointTemplateImpl endpointTemplate = null;
+//        endpointTemplate = new APIEndpointTemplateImpl(instanceId);
+//        endpointTemplate.withEndpointPath(path).withMethod(method).withTimeout(timeout);
+//        if (expectedStatus != null)
+//            endpointTemplate.withExpectedStatus(expectedStatus);
+//        if (responseClass != null)
+//            endpointTemplate.withResponseType(responseClass);
+//        if (namingStrategy != null)
+//            endpointTemplate.withPropertyNamingStrategy(namingStrategy);
+//        if (headers.size() > 0)
+//            endpointTemplate.withHeaders(new HashMap<>(headers));
+//        if (pathParams.size() > 0)
+//            endpointTemplate.withPathParameters(new HashMap<>(pathParams));
+//        if (queryParams.size() > 0)
+//            endpointTemplate.withQueryParameters(new HashMap<>(queryParams));
+//        if (bodyParams.size() > 0)
+//            endpointTemplate.withBodyParameters(new HashMap<>(bodyParams));
+//        if (authenticators.size() > 0) {
+//            for (Map.Entry<String, Authenticator> entry : authenticators.entrySet())
+//                try {
+//                    endpointTemplate.addAuthenticator((Authenticator) entry.getValue().clone());
+//                } catch (CloneNotSupportedException e) {
+//                    throw new RuntimeException(e);
+//                }
+//        }
+//        return endpointTemplate;
+//    }
+
 }

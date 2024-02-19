@@ -8,7 +8,7 @@ import com.proficient.restapi.util.ValidateObjects;
 import java.net.URI;
 import java.util.HashMap;
 
-public class OAuthClientCredentials {
+class OAuthClientCredentials implements Cloneable{
     private String clientId;
     private String clientSecret;
     private String scope;
@@ -24,6 +24,10 @@ public class OAuthClientCredentials {
         this.tokenUrl = URI.create(ClientBuilder.tokenUrl);
         this.isBasicAuth = ClientBuilder.isBasicAuth;
         this.headers = ClientBuilder.headers;
+    }
+
+    private OAuthClientCredentials() {
+
     }
 
     String getClientId() {
@@ -48,6 +52,18 @@ public class OAuthClientCredentials {
 
     HashMap<String, String> getHeaders() {
         return headers;
+    }
+
+    @Override
+    public Object clone() {
+        OAuthClientCredentials clientCredentials = new OAuthClientCredentials();
+        clientCredentials.clientId = this.clientId;
+        clientCredentials.clientSecret = this.clientSecret;
+        clientCredentials.scope = this.scope;
+        clientCredentials.tokenUrl = this.tokenUrl;
+        clientCredentials.isBasicAuth = this.isBasicAuth;
+        clientCredentials.headers = new HashMap<>(this.headers);
+        return clientCredentials;
     }
 
     public static ClientCredentialsBuilderImpl builder(String id) {
@@ -145,13 +161,13 @@ public class OAuthClientCredentials {
         }
 
         private void validateInput() {
-            ValidateObjects.mandatory(id,"Security Scheme reference id is required.");
-            ValidateObjects.mandatory(instanceId,"Rest client reference id is required.");
-            ValidateObjects.mandatory(clientId,"Client ID is required for OAuth client credentials grant type.");
-            ValidateObjects.mandatory(clientSecret,"Client Secret is required for OAuth client credentials grant " +
+            ValidateObjects.mandatory(id, "Security Scheme reference id is required.");
+            ValidateObjects.mandatory(instanceId, "Rest client reference id is required.");
+            ValidateObjects.mandatory(clientId, "Client ID is required for OAuth client credentials grant type.");
+            ValidateObjects.mandatory(clientSecret, "Client Secret is required for OAuth client credentials grant " +
                     "type.");
-            ValidateObjects.mandatory(tokenUrl,"Token URL is required to obtain access token.");
-            ValidateObjects.validateURL(tokenUrl,"URL is invalid.");
+            ValidateObjects.mandatory(tokenUrl, "Token URL is required to obtain access token.");
+            ValidateObjects.validateURL(tokenUrl, "URL is invalid.");
         }
     }
 

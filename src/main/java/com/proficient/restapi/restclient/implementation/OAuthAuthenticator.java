@@ -8,7 +8,6 @@ import com.proficient.restapi.restclient.Http;
 import com.proficient.restapi.restclient.SecurityScheme;
 import com.proficient.restapi.authenticators.ClientCredentialsBuilder;
 import com.proficient.restapi.authenticators.SecureSchemeType;
-import com.proficient.restapi.exception.APIResponseException;
 import com.proficient.restapi.util.ValidateObjects;
 
 import java.io.IOException;
@@ -46,6 +45,10 @@ final class OAuthAuthenticator implements Authenticator {
                 + clientCredentials.getClientSecret() + ":" + clientCredentials.getTokenUrl(), clientCredentials.getClientSecret());
     }
 
+    private OAuthAuthenticator() {
+
+    }
+
     @Override
     public String securitySchemeId() {
         return schemeId;
@@ -57,6 +60,21 @@ final class OAuthAuthenticator implements Authenticator {
         return securityScheme;
     }
 
+//    @Override
+//    public Object clone() {
+//        OAuthAuthenticator authenticator = new OAuthAuthenticator();
+//        authenticator.clientId = this.clientId;
+//        authenticator.keyRefId = this.keyRefId;
+//        authenticator.schemeId = this.schemeId;
+//        try {
+//            authenticator.securityScheme = (SecurityScheme) this.securityScheme.clone();
+//            authenticator.clientCredentials = (OAuthClientCredentials) this.clientCredentials.clone();
+//        } catch (CloneNotSupportedException e) {
+//            throw new RuntimeException(e);
+//        }
+//        return authenticator;
+//    }
+
     protected void resetAccessToken() {
         String accessToken = RESTClientEngine.instance().getCacheManager(clientId).get(keyRefId);
 
@@ -66,6 +84,7 @@ final class OAuthAuthenticator implements Authenticator {
     }
 
     protected String authenticate() {
+        System.out.println("Getting access token");
         try {
             setAuthHeader();
             HttpClient httpClient = HttpClient.newBuilder()
@@ -79,8 +98,9 @@ final class OAuthAuthenticator implements Authenticator {
             if (response.statusCode() == Http.Status.OK.code())
                 return getJWTToken(response.body());
             else
-                throw new RuntimeException(new APIResponseException(response.version().name(), response.statusCode(),
-                        response.headers().map(), response.body()));
+                throw new RuntimeException(APIResponseExceptionImpl.
+                        APIResponseBuilder(response, null).
+                        build());
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -133,8 +153,7 @@ final class OAuthAuthenticator implements Authenticator {
             RESTClientEngine.instance().getCacheManager(clientId).set(keyRefId, jwtToken.toString(), expiryTime);
 
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(new APIResponseException("Unable to process JWT token.Root cause of the issue " +
-                    "is " + e.getMessage()));
+            throw new RuntimeException(APIResponseExceptionImpl.APIResponseBuilder(null, e).build());
         }
         return jwtToken.toString();
     }

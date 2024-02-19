@@ -56,6 +56,9 @@ public interface SecurityScheme {
      */
     public void setValue(String value);
 
+//    public Object clone() throws CloneNotSupportedException;
+
+
     /**
      * Represents the name of the Security Scheme type HTTP
      */

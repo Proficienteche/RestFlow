@@ -16,7 +16,10 @@ class APIKeyAuthenticator implements Authenticator {
         this.schemeId = builder.getId();
         this.securityScheme = builder.securityScheme;
     }
+    private APIKeyAuthenticator()
+    {
 
+    }
     @Override
     public String securitySchemeId() {
         return schemeId;
@@ -26,6 +29,21 @@ class APIKeyAuthenticator implements Authenticator {
     public SecurityScheme getSecurityScheme() {
         return securityScheme;
     }
+
+//    @Override
+//    public APIKeyAuthenticator clone() {
+//        APIKeyAuthenticator authenticator = new APIKeyAuthenticator();
+//        if (schemeId != null)
+//            authenticator.schemeId = String.valueOf(schemeId);
+//        if (securityScheme != null) {
+//            try {
+//                authenticator.securityScheme = (SecurityScheme) securityScheme.clone();
+//            } catch (CloneNotSupportedException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
+//        return authenticator;
+//    }
 
     static APIKeyAuthBuilder builder(String securitySchemeId) {
         return new APIKeyAuthBuilder().id(securitySchemeId);

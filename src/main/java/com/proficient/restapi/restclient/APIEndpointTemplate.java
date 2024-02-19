@@ -1,6 +1,7 @@
 package com.proficient.restapi.restclient;
 
-import com.proficient.restapi.exception.APIResponseException;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.proficient.restapi.restclient.implementation.APIResponseExceptionImpl;
 
 import java.util.Map;
 
@@ -15,13 +16,19 @@ public interface APIEndpointTemplate {
 
     public APIEndpointTemplate withPathParameters(Map<String, String> pathParameters);
 
+    public <T> APIEndpointTemplate withPathParameters(T pathParamsBean);
+
     public APIEndpointTemplate withQueryParameter(String queryParamName, String queryParamValue);
 
     public APIEndpointTemplate withQueryParameters(Map<String, String> queryParameters);
 
+    public <T> APIEndpointTemplate withQueryParameters(T queryParamsBean);
+
     public APIEndpointTemplate withBodyParameter(String bodyParamName, String bodyParamValue);
 
     public APIEndpointTemplate withBodyParameters(Map<String, String> bodyParameters);
+
+    public <T> APIEndpointTemplate withBodyParameters(T bodyParamsBean);
 
     public APIEndpointTemplate withHeader(String headerName, String headerValue);
 
@@ -31,16 +38,23 @@ public interface APIEndpointTemplate {
 
     public APIEndpointTemplate addAuthenticator(Authenticator authenticator);
 
-    public APIEndpointTemplate withBody(String body);
+    public APIEndpointTemplate withPayload(String payload);
 
-    public APIEndpointTemplate withBody(Object body);
+    public APIEndpointTemplate withPayload(Object payload);
+
+    public APIEndpointTemplate withPropertyNamingStrategy(PropertyNamingStrategy namingStrategy);
+
     public APIEndpointTemplate withExpectedStatus(Http.Status status);
 
     public APIEndpointTemplate withResponseType(Class<?> responseClass);
 
     public APIEndpointTemplate registerTemplate();
+
     public APIEndpointTemplate createEndpoint();
-    public <T> T dispatch() throws APIResponseException;
+
+//    public APIEndpointTemplate createSnapShot(String snapShotName);
+
+    public <T> T dispatch() throws APIResponseExceptionImpl;
 
     public String getEndpointPath();
 }

@@ -21,6 +21,9 @@ class BasicAuthenticator implements Authenticator {
         this.securityScheme = builder.securityScheme;
     }
 
+    private BasicAuthenticator() {
+    }
+
     @Override
     public String securitySchemeId() {
         return schemeId;
@@ -30,6 +33,18 @@ class BasicAuthenticator implements Authenticator {
     public SecurityScheme getSecurityScheme() {
         return securityScheme;
     }
+
+//    @Override
+//    public BasicAuthenticator clone() {
+//        BasicAuthenticator basicAuthenticator = new BasicAuthenticator();
+//        basicAuthenticator.schemeId = this.schemeId;
+//        try {
+//            basicAuthenticator.securityScheme = (SecurityScheme) this.securityScheme.clone();
+//        } catch (CloneNotSupportedException e) {
+//            throw new RuntimeException(e);
+//        }
+//        return basicAuthenticator;
+//    }
 
     static BasicAuthBuilder builder(String securitySchemeId) {
         return new BasicAuthBuilder().id(securitySchemeId);

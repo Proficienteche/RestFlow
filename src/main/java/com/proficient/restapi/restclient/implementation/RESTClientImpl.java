@@ -15,12 +15,10 @@ final class RESTClientImpl implements RESTClient {
 
 
     private String apiURL = null;
-
     private Set<String> securityIds = null;
     private Map<String, Authenticator> authenticators = null;
     private Map<String, AuthenticationBuilder> authBuilders = null;
     private Map<String, APIEndpointTemplate> apiEndpointBuilders = null;
-
     private String instanceId;
 
     RESTClientImpl(RESTClientBuilder restBuilder) {

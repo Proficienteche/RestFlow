@@ -131,5 +131,8 @@ public class Http {
         public String value() {
             return name;
         }
+        public String caseInsensitiveValue() {
+            return name.toLowerCase();
+        }
     }
 }

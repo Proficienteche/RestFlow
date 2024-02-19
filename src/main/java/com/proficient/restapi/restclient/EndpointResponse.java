@@ -1,12 +1,16 @@
 package com.proficient.restapi.restclient;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.proficient.restapi.util.ObjectsUtility;
 
 public class EndpointResponse {
-    public int statusCode;
-    public String statusDescription;
-    public String body;
+    private int statusCode;
+    private String statusDescription;
+    @JsonRawValue
+    private String body;
 
     public EndpointResponse() {
     }
@@ -14,7 +18,7 @@ public class EndpointResponse {
     public EndpointResponse(int statusCode, String body) {
         this.statusCode = statusCode;
         this.statusDescription = Http.messageOf(statusCode);
-        this.body = body;
+        this.body = ObjectsUtility.jsonFormat(body);
     }
 
     public int getStatusCode() {
@@ -23,14 +27,11 @@ public class EndpointResponse {
 
     public void setStatusCode(int statusCode) {
         this.statusCode = statusCode;
+        this.statusDescription = Http.messageOf(statusCode);
     }
 
     public String getStatusDescription() {
         return statusDescription;
-    }
-
-    public void setStatusDescription(String statusDescription) {
-        this.statusDescription = statusDescription;
     }
 
     public String getBody() {
@@ -38,12 +39,15 @@ public class EndpointResponse {
     }
 
     public void setBody(String body) {
-        this.body = body;
+        this.body =ObjectsUtility.jsonFormat(body);
     }
+    @Override
     public String toString()
     {
         try {
-            return new ObjectMapper().writeValueAsString(this);
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.enable(SerializationFeature.INDENT_OUTPUT);
+            return mapper.writeValueAsString(this);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

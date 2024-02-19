@@ -21,7 +21,10 @@ class SecureScheme implements SecurityScheme {
        this.scheme = builder.scheme;
        this.inType = builder.inType;
     }
+    private SecureScheme()
+    {
 
+    }
     /**
      * Retrieves the unique identifier of the security scheme.
      *
@@ -91,6 +94,19 @@ class SecureScheme implements SecurityScheme {
     public void setValue(String value) {
         this.value = value;
     }
+
+//    @Override
+//    public Object clone()
+//    {
+//        SecureScheme localSecureScheme = new SecureScheme();
+//        localSecureScheme.id = id;
+//        localSecureScheme.name = name;
+//        localSecureScheme.value = value;
+//        localSecureScheme.type = type;
+//        localSecureScheme.inType = inType;
+//        localSecureScheme.scheme = scheme;
+//        return localSecureScheme;
+//    }
 
 
     static SecuritySchemeBuilder builder() {

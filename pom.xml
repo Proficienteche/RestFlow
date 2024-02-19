@@ -1,106 +1,203 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.nvssoftech</groupId>
-  <artifactId>RestFlow</artifactId>
-  <version>1.0.0</version>
-  <packaging>jar</packaging>
+    <groupId>io.github.proficienteche</groupId>
+    <artifactId>restflow</artifactId>
+    <version>1.0.1</version>
+    <packaging>jar</packaging>
 
-  <name>RestFlow</name>
-  <url>http://maven.apache.org</url>
+    <name>io.github.proficienteche:RestFlow</name>
+    <description>RestFlow is a Java-based library designed to simplify the development of Restful applications,
+        particularly in microservices architectures. With its fluent API, RestFlow empowers client applications to
+        effortlessly interact with API endpoints on servers, reducing complexity and enhancing productivity.
+    </description>
+    <url>https://github.com/Proficienteche/RestFlow</url>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <junit.jupiter.version>5.9.1</junit.jupiter.version>
-  </properties>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
 
-  <dependencies>
+    <developers>
+        <developer>
+            <name>Gopi Nethi</name>
+            <email>proficienteche@gmail.com</email>
+            <organization>nvssoftech</organization>
+            <organizationUrl>https://nvssoftech.com/</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/simpligility/ossrh-demo.git</connection>
+        <developerConnection>scm:git:ssh://github.com:simpligility/ossrh-demo.git</developerConnection>
+        <url>http://github.com/simpligility/ossrh-demo/tree/master</url>
+    </scm>
 
 
-    <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core -->
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.jupiter.version>5.9.1</junit.jupiter.version>
+    </properties>
+
+    <dependencies>
+  <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.16.0</version>
+        </dependency>
+  <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.16.0</version> <!-- Use the latest version -->
+        </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
-      <version>2.16.0</version>
-    </dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>2.16.0</version> <!-- Use the latest version -->
+        </dependency>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>5.1.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>4.8.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>maven-surefire-common</artifactId>
+            <version>3.0.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite-api</artifactId>
+            <version>1.2.0</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+<!--    <distributionManagement>-->
+<!--        <snapshotRepository>-->
+<!--            <id>ossrh</id>-->
+<!--            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>-->
+<!--        </snapshotRepository>-->
+<!--        <repository>-->
+<!--            <id>ossrh</id>-->
+<!--            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>-->
+<!--        </repository>-->
+<!--    </distributionManagement>-->
 
 
-    <!-- Jackson databind -->
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>2.16.0</version> <!-- Use the latest version -->
-      </dependency>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>11</source>
+                    <target>11</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
-      <!-- Jackson dataformat YAML -->
-      <dependency>
-        <groupId>com.fasterxml.jackson.dataformat</groupId>
-        <artifactId>jackson-dataformat-yaml</artifactId>
-        <version>2.16.0</version> <!-- Use the latest version -->
-      </dependency>
-    <dependency>
-      <groupId>redis.clients</groupId>
-      <artifactId>jedis</artifactId>
-      <version>5.1.0</version>
-    </dependency>
+            <!-- Generate and deploy Javadoc JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadoc</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <version>${junit.jupiter.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <version>${junit.jupiter.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-params</artifactId>
-      <version>${junit.jupiter.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <version>5.10.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-junit-jupiter</artifactId>
-      <version>4.8.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.maven.surefire</groupId>
-      <artifactId>maven-surefire-common</artifactId>
-      <version>3.0.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-suite-api</artifactId>
-      <version>1.2.0</version>
-      <scope>test</scope>
-    </dependency>
+<!--            <plugin>-->
+<!--                <groupId>org.sonatype.plugins</groupId>-->
+<!--                <artifactId>nexus-staging-maven-plugin</artifactId>-->
+<!--                <version>1.6.7</version>-->
+<!--                <extensions>true</extensions>-->
+<!--                <configuration>-->
+<!--                    <serverId>ossrh</serverId>-->
+<!--                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>-->
+<!--                    <autoReleaseAfterClose>true</autoReleaseAfterClose>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-gpg-plugin</artifactId>-->
+<!--                <version>3.1.0</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>sign-artifacts</id>-->
+<!--                        <phase>verify</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>sign</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
+<!--            <plugin>-->
+<!--                <groupId>org.sonatype.plugins</groupId>-->
+<!--                <artifactId>nexus-staging-maven-plugin</artifactId>-->
+<!--                <version>1.6.7</version>-->
+<!--                <extensions>true</extensions>-->
+<!--                <configuration>-->
+<!--                    <serverId>ossrh</serverId>-->
+<!--                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>-->
+<!--                    <autoReleaseAfterClose>true</autoReleaseAfterClose>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
 
+        </plugins>
 
-  </dependencies>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
-        <configuration>
-          <source>11</source>
-          <target>11</target>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+    </build>
 </project>
