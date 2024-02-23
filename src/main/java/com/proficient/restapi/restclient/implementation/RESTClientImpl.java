@@ -20,18 +20,24 @@ final class RESTClientImpl implements RESTClient {
     private Map<String, AuthenticationBuilder> authBuilders = null;
     private Map<String, APIEndpointTemplate> apiEndpointBuilders = null;
     private String instanceId;
+    private boolean isTransientClient;
 
-    RESTClientImpl(RESTClientBuilder restBuilder) {
+    RESTClientImpl(RESTClientBuilder restBuilder,boolean isTransient) {
         this.apiURL = restBuilder.getAPIUrl();
         this.authBuilders = restBuilder.authenticationBuilders();
         this.authenticators = restBuilder.authenticators();
         this.apiEndpointBuilders = restBuilder.apiEndpointTemplates();
-        this.instanceId = RestClientHelper.getHashString(apiURL);
+        this.isTransientClient = isTransient;
         this.securityIds = authenticators.size() > 0 ? authenticators.keySet() : new HashSet<>();
-        HttpClient httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(30))
-                .build();
-        RESTClientEngine.instance().setClientDetails(instanceId, httpClient, new InMemoryCache().init());
+        if (isTransientClient) {
+            this.instanceId = CLIENT_NAME;
+        } else {
+            this.instanceId = RestClientHelper.getHashString(apiURL);
+            HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(30))
+                    .build();
+            RESTClientEngine.instance().setClientDetails(instanceId, httpClient, new InMemoryCache().init());
+        }
+
     }
 
     /**
@@ -153,7 +159,10 @@ final class RESTClientImpl implements RESTClient {
      */
     @Override
     public APIEndpointTemplate createEndpointTemplate() {
-      return new APIEndpointTemplateImpl(instanceId);
+        if (isTransientClient)
+            return new APITransientEndpoint(this);
+        else
+            return new APIEndpointTemplateImpl(instanceId);
     }
 
     /**

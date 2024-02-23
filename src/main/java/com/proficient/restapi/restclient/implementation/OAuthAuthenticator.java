@@ -3,9 +3,7 @@ package com.proficient.restapi.restclient.implementation;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.proficient.restapi.restclient.Authenticator;
-import com.proficient.restapi.restclient.Http;
-import com.proficient.restapi.restclient.SecurityScheme;
+import com.proficient.restapi.restclient.*;
 import com.proficient.restapi.authenticators.ClientCredentialsBuilder;
 import com.proficient.restapi.authenticators.SecureSchemeType;
 import com.proficient.restapi.util.ValidateObjects;
@@ -20,7 +18,7 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.Set;
 
-final class OAuthAuthenticator implements Authenticator {
+final class OAuthAuthenticator implements Authenticator, SecuritySchemeManager {
 
     private static final String ACCESS_TOKEN = "access_token";
     private static final String EXPIRES_IN = "expires_in";
@@ -32,6 +30,7 @@ final class OAuthAuthenticator implements Authenticator {
     private String keyRefId;
     private String clientId;
     private SecurityScheme securityScheme;
+    private CacheManager cache;
 
     OAuthAuthenticator(ClientCredentialsBuilder builder) {
         this.clientCredentials = new OAuthClientCredentials(builder);
@@ -60,6 +59,11 @@ final class OAuthAuthenticator implements Authenticator {
         return securityScheme;
     }
 
+    @Override
+    public void setCacheManager(CacheManager cache) {
+        this.cache = cache;
+    }
+
 //    @Override
 //    public Object clone() {
 //        OAuthAuthenticator authenticator = new OAuthAuthenticator();
@@ -76,7 +80,11 @@ final class OAuthAuthenticator implements Authenticator {
 //    }
 
     protected void resetAccessToken() {
-        String accessToken = RESTClientEngine.instance().getCacheManager(clientId).get(keyRefId);
+        String accessToken = null;
+        if (cache != null)
+            accessToken = cache.get(keyRefId);
+        else
+            accessToken =RESTClientEngine.instance().getCacheManager(clientId).get(keyRefId);
 
         if (ValidateObjects.isEmpty(accessToken))
             accessToken = authenticate();
@@ -98,7 +106,7 @@ final class OAuthAuthenticator implements Authenticator {
             if (response.statusCode() == Http.Status.OK.code())
                 return getJWTToken(response.body());
             else
-                throw new RuntimeException(APIResponseExceptionImpl.
+                throw new RuntimeException(APIResponseException.
                         APIResponseBuilder(response, null).
                         build());
         } catch (IOException | InterruptedException e) {
@@ -150,11 +158,16 @@ final class OAuthAuthenticator implements Authenticator {
             /**
              * Get Cache Manager from REST Client and set token
              */
-            RESTClientEngine.instance().getCacheManager(clientId).set(keyRefId, jwtToken.toString(), expiryTime);
+            if (cache != null)
+                cache.set(keyRefId, jwtToken.toString(), expiryTime);
+            else
+                RESTClientEngine.instance().getCacheManager(clientId).set(keyRefId, jwtToken.toString(), expiryTime);
 
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(APIResponseExceptionImpl.APIResponseBuilder(null, e).build());
+            throw new RuntimeException(APIResponseException.APIResponseBuilder(null, e).build());
         }
         return jwtToken.toString();
     }
+
+
 }

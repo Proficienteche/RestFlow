@@ -1,6 +1,7 @@
 package com.proficient.restapi.restclient.implementation;
 
 import com.proficient.restapi.restclient.CacheManager;
+import com.proficient.restapi.restclient.RESTClient;
 import com.proficient.restapi.restclient.RedisCacheBuilder;
 import com.proficient.restapi.storage.JedisCache;
 import com.proficient.restapi.storage.JedisClusterCache;
@@ -70,9 +71,11 @@ final class RedisCacheBuilderImpl implements RedisCacheBuilder {
     }
 
     @Override
-    public void build() {
+    public CacheManager build() {
         CacheManager cacheManager = (isCluster) ? new JedisClusterCache(this) : new JedisCache(this);
-        RESTClientEngine.instance().setCacheManager(clientId, cacheManager);
+        if (!clientId.equals(RESTClient.CLIENT_NAME))
+            RESTClientEngine.instance().setCacheManager(clientId, cacheManager);
+        return cacheManager;
     }
 
 }
