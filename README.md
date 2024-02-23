@@ -16,11 +16,14 @@ RestFlow is a Java-based library designed to simplify the development of Restful
 
 ## Usage
 
-To use RestFlow in your Java project, follow the steps below:
+To use RestFlow in java project, use the below maven dependency:
 
-Download RestFlow jar and place into your app classpath.
-
-- **Note:** Maven dependency will be updated soon.
+		<!-- Maven Dependency -->
+		<dependency>
+			<groupId>io.github.proficienteche</groupId>
+			<artifactId>restflow</artifactId>
+			<version>1.1.0</version>
+		</dependency>
 
 ### RestFlow usage with code snippet
 
