@@ -14,7 +14,7 @@ public interface RESTClientBuilder {
     public RESTClientBuilder addAuthenticator(Authenticator authenticator);
     public RESTClientBuilder addAuthBuilder(AuthenticationBuilder authBuilder);
 
-    public RESTClient createInstance();
+    public RESTClient createInstance(boolean isTransient);
 
     public Map<String, APIEndpointTemplate> apiEndpointTemplates();
     public Map<String, Authenticator> authenticators();

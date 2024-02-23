@@ -3,7 +3,7 @@ package com.proficient.restapi.exception;
 import java.util.List;
 import java.util.Map;
 
-public interface APIResponseException {
+public interface APIException {
     public String protocol();
 
     public int statusCode();

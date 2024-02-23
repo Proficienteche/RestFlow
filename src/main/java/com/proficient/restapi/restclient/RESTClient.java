@@ -5,7 +5,7 @@ import com.proficient.restapi.authenticators.SecureSchemeType;
 import java.util.Set;
 
 public interface RESTClient {
-
+    public static final String CLIENT_NAME="TRANSIENT_CLIENT";
     /**
      * Returns API server URL
      * <p>

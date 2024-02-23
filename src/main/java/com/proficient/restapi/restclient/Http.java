@@ -64,7 +64,8 @@ public class Http {
         INSUFFICIENT_STORAGE(507, "Insufficient Storage"),
         LOOP_DETECTED(508, "Loop Detected"),
         NOT_EXTENDED(510, "Not Extended"),
-        NETWORK_AUTHENTICATION_REQUIRED(511, "Network Authentication Required");
+        NETWORK_AUTHENTICATION_REQUIRED(511, "Network Authentication Required"),
+        UNABLE_TO_CONNECT(600,"Unable to connect server");
         private int code;
         private String reason;
 

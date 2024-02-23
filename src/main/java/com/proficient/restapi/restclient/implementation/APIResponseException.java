@@ -1,6 +1,6 @@
 package com.proficient.restapi.restclient.implementation;
 
-import com.proficient.restapi.exception.APIResponseException;
+import com.proficient.restapi.exception.APIException;
 import com.proficient.restapi.restclient.Http;
 import com.proficient.restapi.util.ObjectsUtility;
 
@@ -8,7 +8,7 @@ import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
 
-public class APIResponseExceptionImpl extends Exception implements APIResponseException {
+public class APIResponseException extends Exception implements APIException {
 
 
     // Instance variables to store HTTP response details
@@ -21,7 +21,7 @@ public class APIResponseExceptionImpl extends Exception implements APIResponseEx
     private Map<String, List<String>> headers = null;
 
 
-    private APIResponseExceptionImpl(APIResponseBuilder builder) {
+    private APIResponseException(APIResponseBuilder builder) {
         super(builder.responseBody);
         this.protocol = builder.protocol;
         this.statusCode = builder.statusCode;
@@ -103,7 +103,7 @@ public class APIResponseExceptionImpl extends Exception implements APIResponseEx
                     statusCode(response.statusCode()).
                     headers(response.headers().map()).
                     responseBody(response.body());
-        if (exception != null)
+        if(exception != null)
             builder.errorTrace(ObjectsUtility.getStackTraceAsString(exception));
         if(exception != null && response==null)
             builder.responseBody(exception.getMessage());
@@ -162,8 +162,8 @@ public class APIResponseExceptionImpl extends Exception implements APIResponseEx
             return this;
         }
 
-        APIResponseExceptionImpl build() {
-            return new APIResponseExceptionImpl(this);
+        APIResponseException build() {
+            return new APIResponseException(this);
         }
 
     }

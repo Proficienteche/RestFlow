@@ -4,6 +4,7 @@ import com.proficient.restapi.restclient.Authenticator;
 import com.proficient.restapi.restclient.Http;
 import com.proficient.restapi.authenticators.BasicAuthenticatorBuilder;
 import com.proficient.restapi.authenticators.SecureSchemeType;
+import com.proficient.restapi.restclient.RESTClient;
 import com.proficient.restapi.restclient.SecurityScheme;
 import com.proficient.restapi.util.ValidateObjects;
 
@@ -126,7 +127,8 @@ class BasicAuthenticator implements Authenticator {
                 ValidateObjects.mandatory(value, "Token is required for Bearer security scheme.");
             securityScheme = schemeBuilder.build();
             BasicAuthenticator basicAuth = new BasicAuthenticator(this);
-            RestFlow.instanceOf(clientId).addAuthenticator(basicAuth);
+            if (!clientId.equals(RESTClient.CLIENT_NAME))
+                RestFlow.instanceOf(clientId).addAuthenticator(basicAuth);
             return basicAuth;
         }
 

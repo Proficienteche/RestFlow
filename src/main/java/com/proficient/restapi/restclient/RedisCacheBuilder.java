@@ -24,5 +24,5 @@ public interface RedisCacheBuilder {
 
     public Set<HostAndPort> getNodes();
 
-    public void build();
+    public CacheManager build();
 }

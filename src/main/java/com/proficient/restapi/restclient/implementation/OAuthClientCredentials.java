@@ -3,6 +3,7 @@ package com.proficient.restapi.restclient.implementation;
 import com.proficient.restapi.restclient.Authenticator;
 import com.proficient.restapi.authenticators.ClientCredentialsBuilder;
 import com.proficient.restapi.restclient.Http;
+import com.proficient.restapi.restclient.RESTClient;
 import com.proficient.restapi.util.ValidateObjects;
 
 import java.net.URI;
@@ -156,7 +157,8 @@ class OAuthClientCredentials implements Cloneable{
             //validate input data
             validateInput();
             OAuthAuthenticator oAuthenticator = new OAuthAuthenticator(this);
-            RestFlow.instanceOf(instanceId).addAuthenticator(oAuthenticator);
+            if (!instanceId.equals(RESTClient.CLIENT_NAME))
+                RestFlow.instanceOf(instanceId).addAuthenticator(oAuthenticator);
             return oAuthenticator;
         }
 

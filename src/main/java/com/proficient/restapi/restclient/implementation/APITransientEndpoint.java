@@ -1,6 +1,8 @@
 package com.proficient.restapi.restclient.implementation;
 
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.proficient.restapi.restclient.*;
 import com.proficient.restapi.util.ObjectsUtility;
 import com.proficient.restapi.util.ValidateObjects;
@@ -17,10 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 
-final class APIEndpointTemplateImpl implements APIEndpointTemplate {
-
-    private String templateSnapShotName;
-    private String instanceId;
+public class APITransientEndpoint implements APIEndpointTemplate {
+    private RESTClient restClient;
     private String path;
     private Http.Method method;
     private HashMap<String, String> pathParams;
@@ -38,9 +38,8 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
     private boolean isDefaultResponse;
 
 
-    APIEndpointTemplateImpl(String instanceId) {
-        ValidateObjects.mandatory(instanceId, "Valid RestClient instance reference id is required.");
-        this.instanceId = instanceId;
+    APITransientEndpoint(RESTClient restClient) {
+        this.restClient = restClient;
         restRequestParams();
     }
 
@@ -53,7 +52,6 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
         authenticators = new HashMap<>();
         headers.put(Http.Header.CONTENT_TYPE.value(), Http.ContentType.APPLICATION_JSON.value());
     }
-
 
     @Override
     public APIEndpointTemplate withEndpointPath(String path) {
@@ -193,30 +191,14 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
 
     @Override
     public APIEndpointTemplate registerTemplate() {
+        restClient.registerEndpointTemplate(this);
         return this;
     }
 
     @Override
     public APIEndpointTemplate createEndpoint() {
-        validateInputData();
-//        buildHttpRequest();
-        return this;
+       return this;
     }
-
-//    @Override
-//    public APIEndpointTemplate createSnapShot() {
-//        this.templateSnapShotName = path;
-//        validateInputData();
-//
-//        return this;
-//    }
-
-//    @Override
-//    public APIEndpointTemplate createSnapShot(String name) {
-//        this.templateSnapShotName = name;
-//        validateInputData();
-//        return this;
-//    }
 
     @Override
     public <T> T dispatch() throws APIResponseException {
@@ -225,7 +207,8 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
         try {
             HttpRequest httpRequest = buildHttpRequest();
             setResponseType();
-            HttpClient httpClient = RESTClientEngine.instance().getHttpClient(instanceId);
+            HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(30))
+                    .build();
             response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             if (isDefaultResponse)
                 return (T) new EndpointResponse(response.statusCode(), response.body());
@@ -252,9 +235,9 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
         ValidateObjects.mandatory(path, "Endpoint path is required.");
         ValidateObjects.mandatory(method, "Http Method is required");
         Set<String> pathParameters = ValidateObjects.parsePathParamters(path);
-        if (!pathParameters.isEmpty()) {
+        if (pathParameters.size() > 0) {
             Set<String> givenPathParams = pathParams.keySet();
-            if (!givenPathParams.containsAll(pathParameters))
+            if (givenPathParams == null || !givenPathParams.containsAll(pathParameters))
                 throw new IllegalArgumentException("Required path parameters are missed.");
         }
     }
@@ -280,7 +263,7 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
 
         setSecuritySchemes();
         serializeBodyObject();
-        if (!bodyParams.isEmpty())
+        if (bodyParams.size() > 0)
             bodyForm = prepareBodyForm();
         if (method == Http.Method.POST || method == Http.Method.PUT || method == Http.Method.PATCH) {
             if (ValidateObjects.isEmpty(body))
@@ -290,12 +273,11 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
             bodyPublisher = HttpRequest.BodyPublishers.noBody();
 
 
-        if (!pathParams.isEmpty())
+        if (pathParams.size() > 0)
             endPointPath = replaceParameters(endPointPath);
-        if (!queryParams.isEmpty())
+        if (queryParams.size() > 0)
             endPointPath = prepareQueryString(endPointPath);
 
-        RESTClient restClient = RestFlow.instanceOf(instanceId);
         URI uri = URI.create(restClient.getAPIUrl() + endPointPath);
         requestBuilder =
                 HttpRequest.newBuilder(uri).method(method.getName(), bodyPublisher).headers(getHeaders()).timeout(Duration.ofSeconds(timeout));
@@ -318,8 +300,7 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
 
     private void setSecuritySchemes() {
         List<Authenticator> authenticatorList = new ArrayList<>();
-        RESTClient restClient = RestFlow.instanceOf(instanceId);
-        if (!securitySchemeIds.isEmpty()) {
+        if (securitySchemeIds.size() > 0) {
             for (String id : securitySchemeIds)
                 authenticatorList.add(authenticators.containsKey(id) ? authenticators.get(id)
                         : restClient.getAuthenticator(id));
@@ -354,25 +335,33 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
     }
 
     private String prepareQueryString(String path) {
-        StringBuilder queryString = new StringBuilder();
-        for (Map.Entry<String, String> entry : queryParams.entrySet()) {
-            String param = URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8);
-            String value = URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8);
-            if (queryString.length() > 0)
-                queryString.append("&");
-            queryString.append(param).append('=').append(value);
+        StringBuffer queryString = new StringBuffer();
+        try {
+            for (Map.Entry<String, String> entry : queryParams.entrySet()) {
+                String param = URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.toString());
+                String value = URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString());
+                if (queryString.length() > 0)
+                    queryString.append("&");
+                queryString.append(param).append('=').append(value);
+            }
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalArgumentException("Unable to encode query parameters." + e.getMessage());
         }
         return path + "?" + queryString.toString();
     }
 
     private String prepareBodyForm() {
-        StringBuilder formData = new StringBuilder();
-        for (Map.Entry<String, String> entry : bodyParams.entrySet()) {
-            String param = URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8);
-            String value = URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8);
-            if (formData.length() > 0)
-                formData.append("&");
-            formData.append(param).append('=').append(value);
+        StringBuffer formData = new StringBuffer();
+        try {
+            for (Map.Entry<String, String> entry : bodyParams.entrySet()) {
+                String param = URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.toString());
+                String value = URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString());
+                if (formData.length() > 0)
+                    formData.append("&");
+                formData.append(param).append('=').append(value);
+            }
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalArgumentException("Unable to encode form parameters." + e.getMessage());
         }
         return formData.toString();
     }
@@ -412,35 +401,4 @@ final class APIEndpointTemplateImpl implements APIEndpointTemplate {
         }
         return params;
     }
-
-
-//    private APIEndpointTemplateImpl copy() {
-//        APIEndpointTemplateImpl endpointTemplate = null;
-//        endpointTemplate = new APIEndpointTemplateImpl(instanceId);
-//        endpointTemplate.withEndpointPath(path).withMethod(method).withTimeout(timeout);
-//        if (expectedStatus != null)
-//            endpointTemplate.withExpectedStatus(expectedStatus);
-//        if (responseClass != null)
-//            endpointTemplate.withResponseType(responseClass);
-//        if (namingStrategy != null)
-//            endpointTemplate.withPropertyNamingStrategy(namingStrategy);
-//        if (headers.size() > 0)
-//            endpointTemplate.withHeaders(new HashMap<>(headers));
-//        if (pathParams.size() > 0)
-//            endpointTemplate.withPathParameters(new HashMap<>(pathParams));
-//        if (queryParams.size() > 0)
-//            endpointTemplate.withQueryParameters(new HashMap<>(queryParams));
-//        if (bodyParams.size() > 0)
-//            endpointTemplate.withBodyParameters(new HashMap<>(bodyParams));
-//        if (authenticators.size() > 0) {
-//            for (Map.Entry<String, Authenticator> entry : authenticators.entrySet())
-//                try {
-//                    endpointTemplate.addAuthenticator((Authenticator) entry.getValue().clone());
-//                } catch (CloneNotSupportedException e) {
-//                    throw new RuntimeException(e);
-//                }
-//        }
-//        return endpointTemplate;
-//    }
-
 }

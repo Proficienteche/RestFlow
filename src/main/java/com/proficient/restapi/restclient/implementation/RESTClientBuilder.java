@@ -3,14 +3,11 @@ package com.proficient.restapi.restclient.implementation;
 import com.proficient.restapi.authenticators.AuthenticationBuilder;
 import com.proficient.restapi.restclient.APIEndpointTemplate;
 import com.proficient.restapi.restclient.Authenticator;
-import com.proficient.restapi.restclient.CacheManager;
 import com.proficient.restapi.restclient.RESTClient;
-import com.proficient.restapi.storage.InMemoryCache;
 
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 final class RESTClientBuilder implements com.proficient.restapi.restclient.RESTClientBuilder {
 
@@ -89,8 +86,8 @@ final class RESTClientBuilder implements com.proficient.restapi.restclient.RESTC
     }
 
     @Override
-    public RESTClient createInstance() {
-        return new RESTClientImpl(this);
+    public RESTClient createInstance(boolean isTransient) {
+        return new RESTClientImpl(this,isTransient);
     }
 
 }
